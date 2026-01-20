@@ -56,16 +56,22 @@ jobs:
     environment: snyk
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag boosef-juiceshop:latest
-    - name: Scan and Monitor Docker Vulnerabilities
-      uses: snyk/actions/docker@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        image: boosef-juiceshop:latest
-        command: monitor
+      - uses: snyk/actions/setup@master
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
+      - uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag boosef-juiceshop:latest
+      - name: Scan and Monitor Docker Vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: boosef-juiceshop:latest
+          command: monitor
 
   snyk-iac:
     environment: snyk
