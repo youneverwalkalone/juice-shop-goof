@@ -63,11 +63,18 @@ jobs:
       - name: Run Snyk Open Source Test
         id: snyk_oss_test
         continue-on-error: true
-        run: snyk test --severity-threshold=high
-        
+        run: |
+          snyk test \
+            --severity-threshold=high \
+            --org="${{ secrets.SNYK_ORG_ID }}"
+
       - name: Monitor Snyk Open Source
         if: github.event_name == 'push'
-        run: snyk monitor
+        run: |
+          snyk monitor \
+            --project-name="${{ github.repository }}/dependencies" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}"
 
   snyk-code:
     name: Snyk Code Scan
@@ -101,8 +108,14 @@ jobs:
       - name: Run Snyk Code Test
         id: snyk_code_test
         continue-on-error: true
-        run: snyk code test --severity-threshold=high
-
+        run: |
+          snyk code test \
+            --severity-threshold=high \
+            --report \
+            --project-name="${{ github.repository }}/code" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}" 
+            
   snyk-container:
     name: Snyk Container Scan
     needs: setup-snyk
@@ -149,13 +162,18 @@ jobs:
         continue-on-error: true
         run: |
           IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
-          snyk container test ${IMAGE_NAME} --file=Dockerfile --severity-threshold=high
-          
+          snyk container test "${IMAGE_NAME}" \
+            --severity-threshold=high \
+            --org="${{ secrets.SNYK_ORG_ID }}"    
+
       - name: Monitor Docker Container
         if: github.event_name == 'push'
         run: |
           IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
-          snyk container monitor ${IMAGE_NAME} --file=Dockerfile
+          snyk container monitor "${IMAGE_NAME}" \
+            --project-name="${{ github.repository }}/container" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}"
      
   snyk-iac:
     name: Snyk IaC Scan
@@ -189,7 +207,7 @@ jobs:
       - name: Run Snyk IaC Test
         id: snyk_iac_test
         continue-on-error: true
-        run: snyk iac test --report --severity-threshold=high
+        run: snyk iac test --report --severity-threshold=high --org=${{ secrets.SNYK_ORG_ID }}
 
   security-gate:
     name: Security Gate Check

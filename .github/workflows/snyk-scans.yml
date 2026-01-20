@@ -77,13 +77,20 @@ jobs:
       - name: Snyk Open Source Test
         id: snyk_os_test
         continue-on-error: true
-        run: snyk test --severity-threshold=high
+        run: |
+          snyk test \
+            --severity-threshold=high \
+            --org="${{ secrets.SNYK_ORG_ID }}"        
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Monitor dependencies for security issues with Snyk
         if: github.event_name == 'push'
-        run: snyk monitor
+        run: |
+          snyk monitor \
+            --project-name="${{ github.repository }}/dependencies" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}"
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -117,7 +124,13 @@ jobs:
       - name: Snyk Code Test
         id: snyk_code_test
         continue-on-error: true
-        run: snyk code test --severity-threshold=high
+        run: |
+          snyk code test \
+            --severity-threshold=high \
+            --report \
+            --project-name="${{ github.repository }}/code" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}" 
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -154,13 +167,22 @@ jobs:
       - name: Snyk Container Test
         id: snyk_container_test
         continue-on-error: true
-        run: snyk container test boosef-juiceshop:latest --file=Dockerfile --severity-threshold=high
+        run: |
+          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          snyk container test "${IMAGE_NAME}" \
+            --severity-threshold=high \
+            --org="${{ secrets.SNYK_ORG_ID }}"    
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Monitor Docker Container
         if: github.event_name == 'push'
-        run: snyk container monitor boosef-juiceshop:latest --file=Dockerfile
+        run: |
+          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          snyk container monitor "${IMAGE_NAME}" \
+            --project-name="${{ github.repository }}/container" \
+            --org="${{ secrets.SNYK_ORG_ID }}" \
+            --target-reference="${{ github.ref_name }}"
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -194,7 +216,8 @@ jobs:
       - name: Snyk IaC Test
         id: snyk_iac_test
         continue-on-error: true
-        run: snyk iac test --report --severity-threshold=high
+        run: snyk iac test --report --severity-threshold=high --org=${{ secrets.SNYK_ORG_ID }}
+
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
