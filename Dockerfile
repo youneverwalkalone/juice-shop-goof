@@ -6,9 +6,14 @@ FROM node:20.18.1-bookworm-slim AS installer
 COPY . /juice-shop
 WORKDIR /juice-shop
 
-# Install git and openssh-client (required for npm dependencies) and clean up in same layer
+# Install git, openssh-client, and all SSL-related packages
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git openssh-client && \
+    apt-get install -y --no-install-recommends \
+        git \
+        openssh-client \
+        ca-certificates \
+        openssl && \
+    update-ca-certificates --fresh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
