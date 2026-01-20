@@ -6,6 +6,12 @@ FROM node:20.18.1-bookworm-slim AS installer
 COPY . /juice-shop
 WORKDIR /juice-shop
 
+# Install git (required for npm dependencies) and clean up in same layer
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install global dependencies with pinned versions
 RUN npm i -g typescript@5.7.2 ts-node@10.9.2
 
