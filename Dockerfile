@@ -1,21 +1,21 @@
 FROM node:20-buster as installer
 COPY . /juice-shop
 WORKDIR /juice-shop
-RUN npm i -g typescript ts-node
-RUN npm install --omit=dev --unsafe-perm
+RUN npm i -g typescript@5.3.3 ts-node@10.9.2
+RUN npm install --omit=dev
 RUN npm dedupe
 RUN rm -rf frontend/node_modules
 RUN rm -rf frontend/.angular
-RUN rm -rf frontend/src/assets
-RUN mkdir logs
-RUN chown -R 65532 logs
+RUN rm -rf frontend/node_modules frontend/.angular frontend/src/assets
+RUN mkdir -p logs && chown -R 65532:0 logs
 RUN chgrp -R 0 ftp/ frontend/dist/ logs/ data/ i18n/
 RUN chmod -R g=u ftp/ frontend/dist/ logs/ data/ i18n/
-RUN rm data/chatbot/botDefaultTrainingData.json || true
-RUN rm ftp/legal.md || true
-RUN rm i18n/*.json || true
 
-ARG CYCLONEDX_NPM_VERSION=latest
+RUN find data/chatbot -name "botDefaultTrainingData.json" -delete 2>/dev/null || true
+RUN find ftp -name "legal.md" -delete 2>/dev/null || true
+RUN find i18n -name "*.json" -delete 2>/dev/null || true
+
+ARG CYCLONEDX_NPM_VERSION=5.0.0
 RUN npm install -g @cyclonedx/cyclonedx-npm@$CYCLONEDX_NPM_VERSION
 RUN npm run sbom
 
