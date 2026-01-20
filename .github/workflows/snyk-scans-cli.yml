@@ -15,88 +15,171 @@ jobs:
   snyk-os:
     environment: snyk
     runs-on: ubuntu-latest
-    continue-on-error: true
+    outputs:
+      exit_code: ${{ steps.snyk_oss_test.outcome }}
     steps:
       - uses: actions/checkout@master
+      
       - name: Install Snyk CLI
         run: |
           wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
           mv ./snyk /usr/local/bin/
+          
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
-      - name: Authenticate and run Snyk Open Source Scan + Monitor
-        run: | 
-          npm install
-          snyk auth ${{ secrets.SNYK_TOKEN }}
-          snyk test
-          snyk monitor
+          
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Run Snyk Open Source Test
+        id: snyk_oss_test
+        continue-on-error: true
+        run: snyk test --severity-threshold=high
+        
+      - name: Monitor Snyk Open Source
+        if: github.event_name == 'push'
+        run: snyk monitor
 
   snyk-code:
     environment: snyk
     runs-on: ubuntu-latest
-    continue-on-error: true
+    outputs:
+      exit_code: ${{ steps.snyk_code_test.outcome }}
     steps:
       - uses: actions/checkout@master
+      
       - name: Install Snyk CLI
         run: |
           wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
           mv ./snyk /usr/local/bin/
+          
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
-      - name: Configure and run Snyk Code Scan
-        run: | 
-          snyk auth ${{ secrets.SNYK_TOKEN }}
-          snyk code test
+          
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        
+      - name: Run Snyk Code Test
+        id: snyk_code_test
+        continue-on-error: true
+        run: snyk code test --severity-threshold=high
 
   snyk-container:
     environment: snyk
     runs-on: ubuntu-latest
-    continue-on-error: true
+    outputs:
+      exit_code: ${{ steps.snyk_container_test.outcome }}
     steps:
-    - uses: actions/checkout@master
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag boosef-juiceshop:latest
-    - name: Install Snyk CLI
-      run: |
-        wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
-        chmod +x ./snyk
-        mv ./snyk /usr/local/bin/
-    - name: Configure Snyk for AU region
-      run: |
-        snyk config set endpoint=https://app.au.snyk.io/api
-        snyk config set use-base64-encoding=true
-        echo "✅ Snyk configured for AU region"
-    - name: Scan and Monitor Docker Vulnerabilities
-      run: |   
-        snyk auth ${{ secrets.SNYK_TOKEN }}
-        snyk container test boosef-juiceshop:latest --file=Dockerfile
-        snyk container monitor boosef-juiceshop:latest --file=Dockerfile
+      - uses: actions/checkout@master
+      
+      - name: Build the Docker image
+        id: docker_build
+        run: |
+          # Build image with tag
+          IMAGE_NAME="${{ github.repository }}:${{ github.sha }}"
+          
+          echo "🐳 Building Docker image..."
+          docker build -t "${IMAGE_NAME}" .
+          
+          echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "✅ Image built: ${IMAGE_NAME}"
+          
+      - name: Install Snyk CLI
+        run: |
+          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x ./snyk
+          mv ./snyk /usr/local/bin/
+          
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
+          
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        
+      - name: Scan Docker Container
+        id: snyk_container_test
+        continue-on-error: true
+        run: |
+          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          snyk container test ${IMAGE_NAME} --file=Dockerfile --severity-threshold=high
+          
+      - name: Monitor Docker Container
+        if: github.event_name == 'push'
+        run: |
+          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          snyk container monitor ${IMAGE_NAME} --file=Dockerfile
      
   snyk-iac:
     environment: snyk
     runs-on: ubuntu-latest
-    continue-on-error: true
+    outputs:
+      exit_code: ${{ steps.snyk_iac_test.outcome }}
     steps:
-    - uses: actions/checkout@master
-    - name: Install Snyk CLI
-      run: |
-        wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
-        chmod +x ./snyk
-        mv ./snyk /usr/local/bin/
-    - name: Configure Snyk for AU region
-      run: |
-        snyk config set endpoint=https://app.au.snyk.io/api
-        snyk config set use-base64-encoding=true
-        echo "✅ Snyk configured for AU region"
-    - name: Run and monitor Snyk to check configuration files for security issues
-      run: |   
-        snyk auth ${{ secrets.SNYK_TOKEN }}
-        snyk iac test --report
+      - uses: actions/checkout@master
+      
+      - name: Install Snyk CLI
+        run: |
+          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x ./snyk
+          mv ./snyk /usr/local/bin/
+          
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
+          
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+        
+      - name: Run Snyk IaC Test
+        id: snyk_iac_test
+        continue-on-error: true
+        run: snyk iac test --report --severity-threshold=high
+
+  security-gate:
+    name: Security Gate Check
+    runs-on: ubuntu-latest
+    needs: [snyk-os, snyk-code, snyk-container, snyk-iac]
+    if: always()
+    steps:
+      - name: Check security scan results
+        run: |
+          echo "🔍 Security Scan Results:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Open Source:  ${{ needs.snyk-os.outputs.exit_code }}"
+          echo "Code:         ${{ needs.snyk-code.outputs.exit_code }}"
+          echo "Container:    ${{ needs.snyk-container.outputs.exit_code }}"
+          echo "IaC:          ${{ needs.snyk-iac.outputs.exit_code }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          if [[ "${{ needs.snyk-os.outputs.exit_code }}" == "failure" ]] || \
+             [[ "${{ needs.snyk-code.outputs.exit_code }}" == "failure" ]] || \
+             [[ "${{ needs.snyk-container.outputs.exit_code }}" == "failure" ]] || \
+             [[ "${{ needs.snyk-iac.outputs.exit_code }}" == "failure" ]]; then
+            echo ""
+            echo "❌ Security scan found HIGH or CRITICAL severity issues"
+            echo ""
+            echo "🔍 Review the findings at:"
+            echo "   https://app.au.snyk.io/org/${{ secrets.SNYK_ORG }}"
+            echo ""
+            echo "⚠️  Please address these security issues before merging."
+            exit 1
+          else
+            echo ""
+            echo "✅ All security scans passed!"
+          fi

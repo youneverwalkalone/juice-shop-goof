@@ -95,7 +95,7 @@ LABEL org.opencontainers.image.source="https://github.com/youneverwalkalone/juic
 LABEL org.opencontainers.image.url="https://github.com/youneverwalkalone/juice-shop-goof"
 LABEL org.opencontainers.image.documentation="https://github.com/youneverwalkalone/juice-shop-goof/blob/main/README.md"
 LABEL io.snyk.containers.image.dockerfile="/Dockerfile"
-LABEL maintainer="Thanawat@fusion.co.th>"
+LABEL maintainer="Thanawat@fusion.co.th"
 
 # Set working directory
 WORKDIR /juice-shop
