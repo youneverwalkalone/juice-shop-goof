@@ -23,6 +23,11 @@ jobs:
           wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
           mv ./snyk /usr/local/bin/
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
       - name: Authenticate and run Snyk Open Source Scan + Monitor
         run: | 
           npm install
@@ -41,6 +46,11 @@ jobs:
           wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
           mv ./snyk /usr/local/bin/
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
       - name: Configure and run Snyk Code Scan
         run: | 
           snyk auth ${{ secrets.SNYK_TOKEN }}
@@ -59,6 +69,11 @@ jobs:
         wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
         chmod +x ./snyk
         mv ./snyk /usr/local/bin/
+    - name: Configure Snyk for AU region
+      run: |
+        snyk config set endpoint=https://app.au.snyk.io/api
+        snyk config set use-base64-encoding=true
+        echo "✅ Snyk configured for AU region"
     - name: Scan and Monitor Docker Vulnerabilities
       run: |   
         snyk auth ${{ secrets.SNYK_TOKEN }}
@@ -76,8 +91,12 @@ jobs:
         wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
         chmod +x ./snyk
         mv ./snyk /usr/local/bin/
+    - name: Configure Snyk for AU region
+      run: |
+        snyk config set endpoint=https://app.au.snyk.io/api
+        snyk config set use-base64-encoding=true
+        echo "✅ Snyk configured for AU region"
     - name: Run and monitor Snyk to check configuration files for security issues
       run: |   
         snyk auth ${{ secrets.SNYK_TOKEN }}
         snyk iac test --report
- 

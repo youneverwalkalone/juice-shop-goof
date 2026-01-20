@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 18.4
       - uses: snyk/actions/setup@master
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
       - name: Snyk OS Test
         run: | 
           npm install snyk
@@ -36,6 +41,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: snyk/actions/setup@master
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
       - name: Snyk Code Test
         continue-on-error: true
         run: snyk code test 
