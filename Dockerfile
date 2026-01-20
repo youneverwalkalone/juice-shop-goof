@@ -51,8 +51,8 @@ RUN if [ -f data/chatbot/botDefaultTrainingData.json ]; then rm data/chatbot/bot
 RUN if [ -f ftp/legal.md ]; then rm ftp/legal.md; fi
 RUN find i18n -name "*.json" -type f -delete 2>/dev/null || true
 
-# Generate SBOM (Software Bill of Materials) with pinned version
-ARG CYCLONEDX_NPM_VERSION=5.3.1
+# Generate SBOM (Software Bill of Materials) with correct version
+ARG CYCLONEDX_NPM_VERSION=4.1.2
 RUN npm install -g @cyclonedx/cyclonedx-npm@$CYCLONEDX_NPM_VERSION
 RUN npm run sbom
 
