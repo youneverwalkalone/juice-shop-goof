@@ -7,8 +7,41 @@ on:
     branches: [ "master" ]
 
 jobs:
+  setup-snyk:
+    name: Setup Snyk CLI
+    environment: snyk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: snyk/actions/setup@master
+      
+      - name: Configure Snyk for AU region
+        run: |
+          snyk config set endpoint=https://app.au.snyk.io/api
+          snyk config set use-base64-encoding=true
+          echo "✅ Snyk configured for AU region"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          
+      - name: Get Snyk config directory
+        id: snyk_config
+        run: |
+          # Find Snyk config file location
+          SNYK_CONFIG_DIR="${HOME}/.config/configstore"
+          mkdir -p "${SNYK_CONFIG_DIR}"
+          echo "config_dir=${SNYK_CONFIG_DIR}" >> "$GITHUB_OUTPUT"
+          ls -la "${SNYK_CONFIG_DIR}" || true
+          
+      - name: Upload Snyk configuration
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-config
+          path: ~/.config/configstore/
+          retention-days: 1
+          if-no-files-found: warn
 
   snyk-os:
+    name: Snyk Open Source Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -23,11 +56,20 @@ jobs:
           
       - uses: snyk/actions/setup@master
       
+      - name: Download Snyk configuration
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-config
+          path: ~/.config/configstore/
+        continue-on-error: true
+          
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Install dependencies
         run: npm install
@@ -46,6 +88,8 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   snyk-code:
+    name: Snyk Code Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -55,11 +99,20 @@ jobs:
       
       - uses: snyk/actions/setup@master
       
+      - name: Download Snyk configuration
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-config
+          path: ~/.config/configstore/
+        continue-on-error: true
+      
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Snyk Code Test
         id: snyk_code_test
@@ -69,6 +122,8 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   snyk-container:
+    name: Snyk Container Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -78,11 +133,20 @@ jobs:
       
       - uses: snyk/actions/setup@master
       
+      - name: Download Snyk configuration
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-config
+          path: ~/.config/configstore/
+        continue-on-error: true
+      
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag boosef-juiceshop:latest
@@ -101,6 +165,8 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   snyk-iac:
+    name: Snyk IaC Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -110,11 +176,20 @@ jobs:
       
       - uses: snyk/actions/setup@master
       
+      - name: Download Snyk configuration
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-config
+          path: ~/.config/configstore/
+        continue-on-error: true
+      
       - name: Configure Snyk for AU region
         run: |
           snyk config set endpoint=https://app.au.snyk.io/api
           snyk config set use-base64-encoding=true
           echo "✅ Snyk configured for AU region"
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Snyk IaC Test
         id: snyk_iac_test

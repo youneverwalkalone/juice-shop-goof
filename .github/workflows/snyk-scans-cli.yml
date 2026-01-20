@@ -11,8 +11,26 @@ on:
     branches: [ "master" ]
 
 jobs:
+  setup-snyk:
+    name: Setup Snyk CLI
+    environment: snyk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Snyk CLI
+        run: |
+          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x ./snyk
+          
+      - name: Upload Snyk CLI as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-cli
+          path: snyk
+          retention-days: 1
 
   snyk-os:
+    name: Snyk Open Source Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -20,11 +38,15 @@ jobs:
     steps:
       - uses: actions/checkout@master
       
-      - name: Install Snyk CLI
+      - name: Download Snyk CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-cli
+          
+      - name: Setup Snyk
         run: |
-          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
-          mv ./snyk /usr/local/bin/
+          sudo mv ./snyk /usr/local/bin/
           
       - name: Configure Snyk for AU region
         run: |
@@ -48,6 +70,8 @@ jobs:
         run: snyk monitor
 
   snyk-code:
+    name: Snyk Code Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -55,11 +79,15 @@ jobs:
     steps:
       - uses: actions/checkout@master
       
-      - name: Install Snyk CLI
+      - name: Download Snyk CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-cli
+          
+      - name: Setup Snyk
         run: |
-          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
-          mv ./snyk /usr/local/bin/
+          sudo mv ./snyk /usr/local/bin/
           
       - name: Configure Snyk for AU region
         run: |
@@ -76,6 +104,8 @@ jobs:
         run: snyk code test --severity-threshold=high
 
   snyk-container:
+    name: Snyk Container Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -95,11 +125,15 @@ jobs:
           echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "✅ Image built: ${IMAGE_NAME}"
           
-      - name: Install Snyk CLI
+      - name: Download Snyk CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-cli
+          
+      - name: Setup Snyk
         run: |
-          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
-          mv ./snyk /usr/local/bin/
+          sudo mv ./snyk /usr/local/bin/
           
       - name: Configure Snyk for AU region
         run: |
@@ -124,6 +158,8 @@ jobs:
           snyk container monitor ${IMAGE_NAME} --file=Dockerfile
      
   snyk-iac:
+    name: Snyk IaC Scan
+    needs: setup-snyk
     environment: snyk
     runs-on: ubuntu-latest
     outputs:
@@ -131,11 +167,15 @@ jobs:
     steps:
       - uses: actions/checkout@master
       
-      - name: Install Snyk CLI
+      - name: Download Snyk CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-cli
+          
+      - name: Setup Snyk
         run: |
-          wget -O snyk https://static.snyk.io/cli/latest/snyk-linux
           chmod +x ./snyk
-          mv ./snyk /usr/local/bin/
+          sudo mv ./snyk /usr/local/bin/
           
       - name: Configure Snyk for AU region
         run: |
