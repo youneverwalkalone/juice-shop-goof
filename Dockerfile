@@ -6,11 +6,15 @@ FROM node:20.18.1-bookworm-slim AS installer
 COPY . /juice-shop
 WORKDIR /juice-shop
 
-# Install git (required for npm dependencies) and clean up in same layer
+# Install git and openssh-client (required for npm dependencies) and clean up in same layer
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git && \
+    apt-get install -y --no-install-recommends git openssh-client && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Configure git to use HTTPS instead of SSH for GitHub (fixes npm install issues)
+RUN git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && \
+    git config --global url."https://".insteadOf ssh://
 
 # Install global dependencies with pinned versions
 RUN npm i -g typescript@5.7.2 ts-node@10.9.2
@@ -82,11 +86,11 @@ LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
-LABEL org.opencontainers.image.source="https://github.com/somerset-inc/juice-shop-goof"
-LABEL org.opencontainers.image.url="https://github.com/somerset-inc/juice-shop-goof"
-LABEL org.opencontainers.image.documentation="https://github.com/somerset-inc/juice-shop-goof/blob/main/README.md"
+LABEL org.opencontainers.image.source="https://github.com/youneverwalkalone/juice-shop-goof"
+LABEL org.opencontainers.image.url="https://github.com/youneverwalkalone/juice-shop-goof"
+LABEL org.opencontainers.image.documentation="https://github.com/youneverwalkalone/juice-shop-goof/blob/main/README.md"
 LABEL io.snyk.containers.image.dockerfile="/Dockerfile"
-LABEL maintainer="Your Team <team@example.com>"
+LABEL maintainer="Thanawat@fusion.co.th>"
 
 # Set working directory
 WORKDIR /juice-shop
