@@ -4,7 +4,6 @@
  */
 
 /* jslint node: true */
-
 import {
   Model,
   type InferAttributes,
