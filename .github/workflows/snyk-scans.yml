@@ -168,7 +168,7 @@ jobs:
         id: snyk_container_test
         continue-on-error: true
         run: |
-          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          IMAGE_NAME="${{ github.repository }}:${{ github.sha }}"
           snyk container test "${IMAGE_NAME}" \
             --severity-threshold=high \
             --org="${{ secrets.SNYK_ORG_ID }}"    
@@ -178,7 +178,7 @@ jobs:
       - name: Monitor Docker Container
         if: github.event_name == 'push'
         run: |
-          IMAGE_NAME="${{ steps.docker_build.outputs.image_name }}"
+          IMAGE_NAME="${{ github.repository }}:${{ github.sha }}"
           snyk container monitor "${IMAGE_NAME}" \
             --project-name="${{ github.repository }}/container" \
             --org="${{ secrets.SNYK_ORG_ID }}" \
