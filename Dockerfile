@@ -1,6 +1,6 @@
 # Updated Dockerfile with security improvements and best practices
 # Base image: Using Bookworm (Debian 12) with pinned version for reproducibility
-FROM node:20.18.1-bookworm-slim as installer
+FROM node:20.18.1-bookworm-slim AS installer
 
 # Copy application files
 COPY . /juice-shop
@@ -10,8 +10,11 @@ WORKDIR /juice-shop
 RUN npm i -g typescript@5.7.2 ts-node@10.9.2
 
 # Install production dependencies
-# Note: If --unsafe-perm is truly needed, document why in comments
-RUN npm install --omit=dev
+# Note: --unsafe-perm is required for Juice Shop due to:
+# - postinstall scripts that need elevated permissions
+# - native module compilation (sqlite3, libxmljs2)
+# - file system operations during dependency installation
+RUN npm install --omit=dev --unsafe-perm
 
 # Deduplicate dependencies to reduce size
 RUN npm dedupe
@@ -40,7 +43,7 @@ RUN npm run sbom
 
 # Workaround stage for libxmljs compatibility issues
 # This addresses platform/architecture-specific build requirements
-FROM node:20.18.1-bookworm as libxmljs-builder
+FROM node:20.18.1-bookworm AS libxmljs-builder
 WORKDIR /juice-shop
 
 # Install build dependencies
